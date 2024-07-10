@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="./style.css">
+    <title>Remote Joystick Control</title>
+    <script src="./node_modules/nipplejs/dist/nipplejs.js"></script> <!-- nipplejs -->
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script> <!-- Socket.IO -->
+</head>
+<body>
+    <div id="joystick"></div>
+    <script>
+        var socket = io('http://192.168.1.201:8080');    //might need to change the IP address
+
+        // joystick instance
+        var joystick = nipplejs.create({
+            zone: document.getElementById('joystick'),
+            mode: 'dynamic',
+            color: 'blue',
+            size: 200
+        });
+
+        joystick.on('move', function (evt, data) {  //send the joystick data to the server(using socket.io)
+            if (data.direction) {
+                socket.emit('move', {
+                    x: data.vector.x,
+                    y: data.vector.y,
+                    force: data.force
+                });
+                console.log(data.vector.x);
+                console.log(data.vector.y);
+                console.log(data.force);
+            }
+        });
+
+        joystick.on('end', function () {    //stop the car when the joystick is released
+            socket.emit('move', {
+                x: 0,
+                y: 0,
+                force: 0
+            });
+        });
+    </script>
+</body>
+</html>
+
