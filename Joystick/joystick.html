@@ -5,12 +5,12 @@
     <link rel="stylesheet" type="text/css" href="./style.css">
     <title>Remote Joystick Control</title>
     <script src="./node_modules/nipplejs/dist/nipplejs.js"></script> <!-- nipplejs -->
-    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script> <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script> <!-- Socket.IO -->
 </head>
 <body>
     <div id="joystick"></div>
     <script>
-        var socket = io('http://192.168.1.201:8080');    //might need to change the IP address
+        var socket = io('http://192.168.1.201:8080');    //might need to change the IP address    'http://localhost:3000'
 
         // joystick instance
         var joystick = nipplejs.create({
@@ -25,7 +25,7 @@
                 socket.emit('move', {
                     x: data.vector.x,
                     y: data.vector.y,
-                    force: data.force
+                    force: data.force                    
                 });
                 console.log(data.vector.x);
                 console.log(data.vector.y);
