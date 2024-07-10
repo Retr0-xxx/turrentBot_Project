@@ -3,12 +3,11 @@ import eventlet
 from flask import Flask
 import motor_control
 
-sio = socketio.Server()
-app = Flask(__name__)
-app.wsgi_app = socketio.WSGIApp(sio, app.wsgi_app)
+sio = socketio.Server(cors_allowed_origins='*')
+app = socketio.WSGIApp(sio)
 
 @sio.event
-def connect(sid):
+def connect(sid,environ):
     print('Client connected:', sid)
 
 @sio.event
@@ -16,7 +15,7 @@ def disconnect(sid):
     print('Client disconnected:', sid)
 
 @sio.event
-def move(data):
+def move(sid, data):
     x = data['x']
     y = data['y']
     force = data['force']
@@ -43,7 +42,7 @@ def move(data):
     
 if __name__ == '__main__':
     #listen to all incoming connections on port 8080
-    eventlet.wsgi.server(eventlet.listen(('', 8080)), app)
+    eventlet.wsgi.server(eventlet.listen(('192.168.1.201', 8080)), app)
 
 '''from flask import Flask, request
 import motor_control
