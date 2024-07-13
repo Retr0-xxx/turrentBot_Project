@@ -1,22 +1,37 @@
 import socketio
 import eventlet
-from flask import Flask
+from flask import Flask, Response
 import motor_control
 import cv2
 import base64
 import numpy as np
+from picamera2 import Picamera2
+
+app2 = Flask(__name__)
 
 sio = socketio.Server(cors_allowed_origins='*')
-app = socketio.WSGIApp(sio)
+app = socketio.WSGIApp(sio, app2)
 
-# 摄像头初始化
-camera = cv2.VideoCapture(0)  # 0代表默认摄像头，也可以用Raspberry Pi摄像头的地址
 
-def encode_frame(img):
-    """对帧进行编码为JPEG格式并转为Base64字符串"""
-    _, buffer = cv2.imencode('.jpg', img)
-    jpg_as_text = base64.b64encode(buffer).decode('utf-8')
-    return f"data:image/jpeg;base64,{jpg_as_text}"
+
+camera = Picamera2()
+camera.configure(camera.create_preview_configuration(main={"format": 'XRGB8888', "size": (640, 480)}))
+camera.start()
+
+def generate_frames():
+    while True:
+        eventlet.sleep(2)
+        frame = camera.capture_array()
+        ret, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer.tobytes()
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+@app2.route('/video_feed')
+def video_feed():
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
 
 @sio.event
 def connect(sid,environ):
@@ -52,23 +67,17 @@ def move(sid, data):
     else:
         motor_control.stop_R()
 
-def video_stream():
-    """不断从摄像头读取帧，编码并发送"""
-    try:
-        while True:
-            ret, frame = camera.read()
-            if not ret:
-                break
-            image_text = encode_frame(frame)
-            sio.emit('video_frame', {'data': image_text}, skip_sid=True)
-    finally:
-        camera.release()
-    
+def generate_frames():
+    while True:
+        frame = camera.capture_array()
+        ret, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer.tobytes()
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+
 if __name__ == '__main__':
-
-    eventlet.spawn(video_stream) # 启动视频流线程
     #listen to all incoming connections on port 8080
-    eventlet.wsgi.server(eventlet.listen(('192.168.1.201', 8080)), app)
+    eventlet.wsgi.server(eventlet.listen(('0.0.0.0', 8080)), app)
 
-# pip install opencv-python-headless
 
