@@ -2,8 +2,6 @@ from flask import Flask, Response
 from picamera2 import Picamera2
 import cv2
 
-### You can donate at https://www.buymeacoffee.com/mmshilleh 
-
 app2 = Flask(__name__)
 
 camera = Picamera2()
@@ -22,5 +20,5 @@ def generate_frames():
 def video_feed():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-if __name__ == '__main__':
+def startVideo():
     app2.run(host='0.0.0.0', port=5000)

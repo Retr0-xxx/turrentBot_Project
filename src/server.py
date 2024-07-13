@@ -7,31 +7,8 @@ import base64
 import numpy as np
 from picamera2 import Picamera2
 
-app2 = Flask(__name__)
-
 sio = socketio.Server(cors_allowed_origins='*')
-app = socketio.WSGIApp(sio, app2)
-
-
-
-camera = Picamera2()
-camera.configure(camera.create_preview_configuration(main={"format": 'XRGB8888', "size": (640, 480)}))
-camera.start()
-
-def generate_frames():
-    while True:
-        eventlet.sleep(2)
-        frame = camera.capture_array()
-        ret, buffer = cv2.imencode('.jpg', frame)
-        frame = buffer.tobytes()
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
-@app2.route('/video_feed')
-def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-
+app = socketio.WSGIApp(sio)
 
 @sio.event
 def connect(sid,environ):
@@ -67,17 +44,7 @@ def move(sid, data):
     else:
         motor_control.stop_R()
 
-def generate_frames():
-    while True:
-        frame = camera.capture_array()
-        ret, buffer = cv2.imencode('.jpg', frame)
-        frame = buffer.tobytes()
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
-
-if __name__ == '__main__':
-    #listen to all incoming connections on port 8080
+def startServer():
     eventlet.wsgi.server(eventlet.listen(('0.0.0.0', 8080)), app)
 
 

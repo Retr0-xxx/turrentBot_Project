@@ -1,21 +1,19 @@
-import motor_control
-from time import sleep
 
-#test motor function
-try:
-    while True:
-        motor_control.setSpeed_L(0.5, "forward")
-        motor_control.setSpeed_R(0.5, "forward")
-        sleep(2)
-        motor_control.setSpeed_L(0.5, "backward")
-        motor_control.setSpeed_R(0.5, "backward")
-        sleep(2)
-        motor_control.setSpeed_L(0.5, "forward")
-        motor_control.setSpeed_R(0.5, "backward")
-        sleep(2)
-        motor_control.setSpeed_L(0.5, "backward")
-        motor_control.setSpeed_R(0.5, "forward")
-        sleep(2)
-except KeyboardInterrupt:
-    motor_control.stopAll()
-    print("stop")
+import server
+import video
+import threading
+
+if __name__ == "__main__":
+    # Create a thread for the server
+    server_thread = threading.Thread(target=server.startServer)
+
+    # Create a thread for video streaming
+    video_thread = threading.Thread(target=video.startVideo)
+
+    # Start both threads
+    server_thread.start()
+    video_thread.start()
+
+    # Optionally, wait for both threads to complete
+    server_thread.join()
+    video_thread.join()
